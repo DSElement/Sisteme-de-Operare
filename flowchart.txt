@@ -1,0 +1,22 @@
+/root
+..treasure_manager
+..HUNTS/
+.......Hunt001/
+..............treasure.data
+..............logfile.txt
+.......Hunt002
+.......Hunt003
+..symlinklog001
+..symlinklog002
+..symlinklog003
+
+in customs vreau:
+-deschide director
+-inchide director
+-creeaza director
+-parcurge un director
+-verifica existenta unui director cu un anumit nume (string path)
+-creeaza file in director
+-verifica daca un file exista in director
+-deschide un file existent in director
+-inchide un file existent in director
