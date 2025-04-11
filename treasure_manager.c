@@ -3,6 +3,9 @@
 #include <stdio.h>
 
 int main(){
-    add("hunt001");
+    /*add("primul_hunt");
+    add("primul_hunt");
+    add("second_hunt");*/
+    list("second_hunt");
     return 0;
 }

@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -Wall -c -O2
-TARGET = operations.c customs.c treasure_manager.c
-OBJECT = operations.o customs.o treasure_manager.o
+CFLAGS = -Wall -c
+TARGET = operations.c customs.c treasure_manager.c treasure.c
+OBJECT = operations.o customs.o treasure_manager.o treasure.o
 
 EXE = treasure_manager
 

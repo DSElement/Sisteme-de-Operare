@@ -2,11 +2,22 @@
 #define CUSTOMS_H__
 
 #include "treasure.h"
-#include <stdbool.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <dirent.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <linux/limits.h>
+#include <stdbool.h>
 
+#define DIRNAMESIZE 20
 #define ERROR_BUFFER_SIZE 20
+#define TEXT_BUFFER 60
+#define LONG_TEXT 1024
 
 void abandonCSTM();
 

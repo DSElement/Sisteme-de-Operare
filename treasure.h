@@ -1,16 +1,16 @@
 #ifndef TREASURE_H__
 #define TREASURE_H__
 
-struct treasure_t{
+typedef struct treasure{
     char treasure_id[20];
     char user_name[20];
     double coordinateX;
     double coordinateY;
     char clue[200];
     int value;
-};
+}Treasure_t;
 
-void add_treasure();
+void add_treasure(Treasure_t* buff_struct);
 
 
 #endif
