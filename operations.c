@@ -151,6 +151,49 @@ void list(char *hunt_id){
     create_log_symlink(hunt_id);
 }
 
+void view(char *hunt_id,char *treasure_id){
+    char cale[PATH_MAX];
+    char temp[LONG_TEXT];
+    if (!(runThroughCheckDirCSTM(hunt_id))){
+        snprintf(temp,sizeof(temp),"No such directory\n");
+        if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
+            abandonCSTM();
+        }
+    }
+
+    snprintf(cale,PATH_MAX,"%s/%s.dat",hunt_id,hunt_id);
+
+    int fileReadID = 0;
+    if ((fileReadID = open(cale,O_RDONLY)) == -1){
+        abandonCSTM();
+    }
+
+    Treasure_t ActiveTreasure;
+
+    int readCheck = 0;
+    while ((readCheck = read(fileReadID,&ActiveTreasure,sizeof(ActiveTreasure))) != 0){
+        if (readCheck == -1){
+            abandonCSTM();
+        }
+        if (strcmp(treasure_id,ActiveTreasure.treasure_id) == 0){
+            break;
+        }
+    }
+    if (readCheck == 0){
+        snprintf(temp,TEXT_BUFFER,"No matching treasure ID was found");
+        log_operation(hunt_id,"View treasure",temp);
+    }
+    else {
+        sprintf(temp,"Treasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n\n",
+                ActiveTreasure.treasure_id,ActiveTreasure.user_name,ActiveTreasure.coordinateX,ActiveTreasure.coordinateY,ActiveTreasure.clue,ActiveTreasure.value);
+                if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
+                    abandonCSTM();
+                }
+                snprintf(temp,TEXT_BUFFER,"Showed details on treasure - %s",treasure_id);
+                log_operation(hunt_id,"View treasure",temp);
+    }
+}
+
 void remove_treasure(char *hunt_id, char *treasure_id){
     char cale[PATH_MAX];
     char oldCale[PATH_MAX];
