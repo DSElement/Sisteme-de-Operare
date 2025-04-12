@@ -11,8 +11,58 @@
 #include <string.h>
 #include <unistd.h>
 #include <linux/limits.h>
-//#include <bits/struct_stat_time64_helper.h>
 #include <time.h>
+
+#define TIMESTAMP_SIZE 30
+
+void log_operation(const char *hunt_id, const char *operation, const char *details) {
+    char cale[PATH_MAX];
+    char log_entry[LONG_TEXT];
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    char timestamp[TIMESTAMP_SIZE];
+    
+    strftime(timestamp, sizeof(timestamp), "%d-%m-%Y %H:%M:%S", tm_info);
+    
+    // Format: [TIMESTAMP] OPERATION: DETAILS
+    snprintf(log_entry, sizeof(log_entry), "[%s] %s: %s\n", 
+             timestamp, operation, details);
+    
+    snprintf(cale, sizeof(cale), "%s/logged_hunt.txt", hunt_id);
+    
+    int fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 0664);
+    if (fileId == -1) {
+        abandonCSTM();
+    }
+    
+    if (write(fileId, log_entry, strlen(log_entry)) == -1) {
+        close(fileId);
+        abandonCSTM();
+    }
+    
+    if (close(fileId) == -1) {
+        abandonCSTM();
+    }
+}
+
+void create_log_symlink(const char *hunt_id) {
+    char target_path[PATH_MAX];
+    char link_path[PATH_MAX];
+    
+    // Path to the actual log file
+    snprintf(target_path, sizeof(target_path), "%s/logged_hunt.txt", hunt_id);
+    
+    // Path for the symbolic link
+    snprintf(link_path, sizeof(link_path), "logged_hunt--%s", hunt_id);
+    
+    // Remove any existing symlink
+    unlink(link_path);
+    
+    // Create the new symlink
+    if (symlink(target_path, link_path) == -1) {
+        abandonCSTM();
+    }
+}
 
 void add(char *hunt_id){
     if (!(runThroughCheckDirCSTM(hunt_id))){
@@ -40,9 +90,6 @@ void add(char *hunt_id){
         abandonCSTM();
     }
 
-    snprintf(cale, sizeof(cale), "%s/logs.txt",hunt_id);
-    snprintf(temp,TEXT_BUFFER,"Added treasure with id: %s\n",ActiveTreasure.treasure_id);
-
     if ((fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 00664)) == -1){
         abandonCSTM();
     }
@@ -54,6 +101,10 @@ void add(char *hunt_id){
     if (close(fileId) == -1){
         abandonCSTM();
     }
+
+    snprintf(temp,TEXT_BUFFER,"Added treasure with id - %s to hunt - %s",ActiveTreasure.treasure_id,hunt_id);
+    log_operation(hunt_id,"Add hunt",temp);
+    create_log_symlink(hunt_id);
 }
 
 void list(char *hunt_id){
@@ -71,7 +122,7 @@ void list(char *hunt_id){
         abandonCSTM();
     }
 
-    sprintf(temp,"Nume: %s\n",hunt_id);
+    sprintf(temp,"\nNume: %s\n",hunt_id);
     if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
         abandonCSTM();
     }
@@ -95,8 +146,9 @@ void list(char *hunt_id){
         if (check == -1){
             abandonCSTM();
         }
-        sprintf(temp,"Treasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n\n",
-                    ActiveTreasure.treasure_id,ActiveTreasure.user_name,ActiveTreasure.coordinateX,ActiveTreasure.coordinateY,ActiveTreasure.clue,ActiveTreasure.value);
+        /*sprintf(temp,"Treasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n\n",
+                    ActiveTreasure.treasure_id,ActiveTreasure.user_name,ActiveTreasure.coordinateX,ActiveTreasure.coordinateY,ActiveTreasure.clue,ActiveTreasure.value);*/
+        snprintf(temp,TEXT_BUFFER,"ID: %s\n",ActiveTreasure.treasure_id);
         if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
             abandonCSTM();
         }
@@ -104,5 +156,7 @@ void list(char *hunt_id){
     if (close(fileId) == -1){
         abandonCSTM();
     }
-
+    snprintf(temp,TEXT_BUFFER,"Listed hunt with ID - %s",hunt_id);
+    log_operation(hunt_id,"List hunt",temp);
+    create_log_symlink(hunt_id);
 }
