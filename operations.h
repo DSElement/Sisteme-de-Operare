@@ -11,7 +11,8 @@ remove_treasure <hunt_id> <id>: Remove a treasure
 remove_hunt <hunt_id>: Remove an entire hunt
 */
 
-
+void printInvalidArguments();
+void helpUser();
 void add(char *hunt_id);
 void list(char *hunt_id);
 void view(char *hunt_id,char *treasure_id);
