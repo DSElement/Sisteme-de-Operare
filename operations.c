@@ -33,13 +33,13 @@ void helpUser() {
     const char *help_message = 
         "Usage: treasure_manager <command> [arguments]\n\n"
         "Commands:\n"
-        "  add <hunt_id>                  Add a new treasure to the specified hunt\n"
-        "  list <hunt_id>                 List all treasures in the specified hunt\n"
-        "  view <hunt_id> <treasure_id>   View details of a specific treasure\n"
-        "  remove_treasure <hunt_id> <treasure_id>\n"
+        "  --add <hunt_id>                  Add a new treasure to the specified hunt\n"
+        "  --list <hunt_id>                 List all treasures in the specified hunt\n"
+        "  --view <hunt_id> <treasure_id>   View details of a specific treasure\n"
+        "  --remove_treasure <hunt_id> <treasure_id>\n"
         "                                 Remove a specific treasure from a hunt\n"
-        "  remove_hunt <hunt_id>          Remove an entire hunt and all its treasures\n"
-        "  help                           Display this help message\n\n"
+        "  --remove_hunt <hunt_id>          Remove an entire hunt and all its treasures\n"
+        "  --help                           Display this help message\n\n"
         "Examples:\n"
         "  treasure_manager --add hunt001\n"
         "  treasure_manager --list hunt001\n"
@@ -124,13 +124,12 @@ void add(char *hunt_id){
         abandonCSTM();
     }
 
-    snprintf(temp,TEXT_BUFFER,"Added treasure with id - %s",ActiveTreasure.treasure_id);
+    snprintf(temp,TEXT_BUFFER,"Added treasure with ID - %s",ActiveTreasure.treasure_id);
     log_operation(hunt_id,"Add hunt",temp);
     create_log_symlink(hunt_id);
 }
 
 void list(char *hunt_id){
-    hunt_id[strcspn(hunt_id,"\n")] = '\0';
     char temp[LONG_TEXT];
     if (!(runThroughCheckDirCSTM(hunt_id))){
         sprintf(temp,"%s\n","No such directory");
