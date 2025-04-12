@@ -155,7 +155,7 @@ void view(char *hunt_id,char *treasure_id){
     char cale[PATH_MAX];
     char temp[LONG_TEXT];
     if (!(runThroughCheckDirCSTM(hunt_id))){
-        snprintf(temp,sizeof(temp),"No such directory\n");
+        snprintf(temp,sizeof(temp),"No such directory (%s)\n",hunt_id);
         if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
             abandonCSTM();
         }
@@ -184,7 +184,7 @@ void view(char *hunt_id,char *treasure_id){
         log_operation(hunt_id,"View treasure",temp);
     }
     else {
-        sprintf(temp,"Treasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n\n",
+        sprintf(temp,"\nTreasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n",
                 ActiveTreasure.treasure_id,ActiveTreasure.user_name,ActiveTreasure.coordinateX,ActiveTreasure.coordinateY,ActiveTreasure.clue,ActiveTreasure.value);
                 if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
                     abandonCSTM();
@@ -199,7 +199,7 @@ void remove_treasure(char *hunt_id, char *treasure_id){
     char oldCale[PATH_MAX];
     char temp[TEXT_BUFFER];
     if (!(runThroughCheckDirCSTM(hunt_id))){
-        snprintf(temp,sizeof(temp),"No such directory\n");
+        snprintf(temp,sizeof(temp),"No such directory (%s)\n",hunt_id);
         if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
             abandonCSTM();
         }
@@ -260,5 +260,45 @@ void remove_treasure(char *hunt_id, char *treasure_id){
         snprintf(temp,TEXT_BUFFER,"No matching treasure ID was found");
         log_operation(hunt_id,"Remove treasure",temp);
         create_log_symlink(hunt_id);
+    }
+}
+
+void remove_hunt(char *hunt_id){
+    char temp[TEXT_BUFFER];
+    char cale[PATH_MAX];
+
+    if (!(runThroughCheckDirCSTM(hunt_id))){
+        snprintf(temp,sizeof(temp),"No such directory (%s)\n",hunt_id);
+        if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
+            abandonCSTM();
+        }
+    }
+
+    DIR *dirID = openDirectoryCSTM(hunt_id);
+
+    struct dirent *contents = NULL;
+    errno = 0;
+    while ((contents = readdir(dirID)) != NULL){
+        if(strcmp(contents->d_name, ".") == 0 || strcmp(contents->d_name, "..")==0){
+            continue;
+        }
+        snprintf(cale,PATH_MAX,"%s/%s",hunt_id,contents->d_name);
+        if (remove(cale) == -1){
+            abandonCSTM();
+        }
+    }
+    if (contents == NULL && errno != 0){
+        abandonCSTM();
+    }
+
+    closeDirectoryCSTM(dirID);
+
+    if (rmdir(hunt_id) == -1){
+        abandonCSTM();
+    }
+    
+    snprintf(cale, PATH_MAX, "logged_hunt--%s", hunt_id);
+    if (unlink(cale) == -1){
+        abandonCSTM();
     }
 }
