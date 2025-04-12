@@ -14,6 +14,7 @@ remove_hunt <hunt_id>: Remove an entire hunt
 
 void add(char *hunt_id);
 void list(char *hunt_id);
+void remove_treasure(char *hunt_id, char *treasure_id);
 
 
 #endif

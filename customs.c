@@ -73,7 +73,7 @@ void createDirectoryCSTM(char *DirName){
 
 bool runThroughCheckDirCSTM(char *DirName)
 {
-    DIR *DirID = NULL;
+    /*DIR *DirID = NULL;
     if ((DirID = opendir(DirName)) == NULL){
         if (errno == ENOENT){
             return false;
@@ -81,6 +81,10 @@ bool runThroughCheckDirCSTM(char *DirName)
     }
     else {
         closeDirectoryCSTM(DirID);
+        return true;
+    }
+    return false;*/
+    if (access(DirName, F_OK) != -1){
         return true;
     }
     return false;

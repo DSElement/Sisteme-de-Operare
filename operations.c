@@ -90,19 +90,7 @@ void add(char *hunt_id){
         abandonCSTM();
     }
 
-    if ((fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 00664)) == -1){
-        abandonCSTM();
-    }
-
-    if (write(fileId,&temp,sizeof(temp)) == -1){
-        abandonCSTM();
-    }
-
-    if (close(fileId) == -1){
-        abandonCSTM();
-    }
-
-    snprintf(temp,TEXT_BUFFER,"Added treasure with id - %s to hunt - %s",ActiveTreasure.treasure_id,hunt_id);
+    snprintf(temp,TEXT_BUFFER,"Added treasure with id - %s",ActiveTreasure.treasure_id);
     log_operation(hunt_id,"Add hunt",temp);
     create_log_symlink(hunt_id);
 }
@@ -153,10 +141,81 @@ void list(char *hunt_id){
             abandonCSTM();
         }
     }
+
     if (close(fileId) == -1){
         abandonCSTM();
     }
+
     snprintf(temp,TEXT_BUFFER,"Listed hunt with ID - %s",hunt_id);
     log_operation(hunt_id,"List hunt",temp);
     create_log_symlink(hunt_id);
+}
+
+void remove_treasure(char *hunt_id, char *treasure_id){
+    char cale[PATH_MAX];
+    char oldCale[PATH_MAX];
+    char temp[TEXT_BUFFER];
+    if (!(runThroughCheckDirCSTM(hunt_id))){
+        snprintf(temp,sizeof(temp),"No such directory\n");
+        if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
+            abandonCSTM();
+        }
+    }
+
+    snprintf(cale,PATH_MAX,"%s/%s.dat",hunt_id,hunt_id);
+
+    int fileReadID = 0, fileWriteID = 0;
+    if ((fileReadID = open(cale,O_RDONLY)) == -1){
+        abandonCSTM();
+    }
+
+    snprintf(cale,PATH_MAX,"%s/temp.data",hunt_id);
+
+    if ((fileWriteID = open(cale,O_CREAT | O_WRONLY, 0664)) == -1){
+        abandonCSTM();
+    }
+
+    Treasure_t ActiveTreasure;
+
+    int readCheck = 0, writeCheck = 0;
+    while ((readCheck = read(fileReadID,&ActiveTreasure,sizeof(ActiveTreasure))) != 0){
+        if (readCheck == -1){
+            abandonCSTM();
+        }
+        if (strcmp(treasure_id,ActiveTreasure.treasure_id) == 0){
+            writeCheck = 1;
+            continue;
+        }
+        if (write(fileWriteID,&ActiveTreasure,sizeof(ActiveTreasure)) == -1){
+            abandonCSTM();
+        }
+    }
+
+    if (close(fileReadID) == -1){
+        abandonCSTM();
+    }
+
+    if (close(fileWriteID) == -1){
+        abandonCSTM();
+    }
+
+    snprintf(oldCale,PATH_MAX,"%s/%s.dat",hunt_id,hunt_id);
+    if (remove(oldCale) == -1){
+        abandonCSTM();
+    }
+
+    if (rename(cale,oldCale) == -1){
+        abandonCSTM();
+    }
+
+    if (writeCheck == 1){
+        snprintf(temp,TEXT_BUFFER,"Removed treasure with id - %s",treasure_id);
+        log_operation(hunt_id,"Remove treasure",temp);
+        create_log_symlink(hunt_id);
+    }
+    else {
+        snprintf(temp,TEXT_BUFFER,"No matching treasure ID was found");
+        log_operation(hunt_id,"Remove treasure",temp);
+        create_log_symlink(hunt_id);
+    }
 }
