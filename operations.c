@@ -190,8 +190,10 @@ void list(char *hunt_id){
         return;
     }
 
-    struct stat dirStat;
-    if (stat(hunt_id,&dirStat) != 0){
+    char cale[PATH_MAX];
+    snprintf(cale, sizeof(cale), "%s/%s.dat", hunt_id, hunt_id);
+    struct stat fileStat;
+    if (stat(cale,&fileStat) != 0){
         abandonCSTM();
     }
 
@@ -199,11 +201,11 @@ void list(char *hunt_id){
     if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
         abandonCSTM();
     }
-    sprintf(temp,"Size: %ld\n",dirStat.st_size);
+    sprintf(temp,"Size: %ld\n",fileStat.st_size);
     if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
         abandonCSTM();
     }
-    sprintf(temp,"Last modified - %s\n",ctime(&dirStat.st_mtime));
+    sprintf(temp,"Last modified - %s\n",ctime(&fileStat.st_mtime));
     if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
         abandonCSTM();
     }
