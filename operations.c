@@ -1,19 +1,6 @@
-#include "treasure.h"
-#include "operations.h"
 #include "customs.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <linux/limits.h>
-#include <time.h>
-#include <sys/select.h>
-#include <sys/time.h>
+#include "operations.h"
+#include "treasure.h"
 
 #define TIMESTAMP_SIZE 30
 
@@ -100,63 +87,6 @@ void create_log_symlink(const char *hunt_id) {
     }
 }
 
-/*void add(char *hunt_id){
-    if (hunt_id[strlen(hunt_id)-1] == '/'){
-        hunt_id[strlen(hunt_id)-1] = '\0';
-    }
-    if (!(runThroughCheckDirCSTM(hunt_id))){
-        createDirectoryCSTM(hunt_id);
-    }
-
-    char cale[PATH_MAX];
-    char temp[TEXT_BUFFER];
-    struct treasure ActiveTreasure;
-    
-    add_treasure(&ActiveTreasure);
-
-    //strncpy(ActiveTreasure.treasure_id,hunt_id,sizeof(hunt_id));
-    snprintf(cale, sizeof(cale), "%s/%s.dat",hunt_id, hunt_id);
-
-    if (access(cale,F_OK) != 0 && errno == ENOENT){
-        int fileId = 0;
-        if ((fileId = open(cale, O_CREAT, 00664)) == -1)
-        {
-            abandonCSTM();
-        }
-
-        if (close(fileId) == -1)
-        {
-            abandonCSTM();
-        }
-    }
-
-    if (!(isTreasureAvailable(cale,ActiveTreasure.treasure_id))){
-        snprintf(temp,TEXT_BUFFER,"Treasure ID already taken\n");
-        if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
-            abandonCSTM();
-        }
-        return;
-    }
-
-    int fileId = 0;
-    if ((fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 00664)) == -1){
-        abandonCSTM();
-    }
-
-
-    if (write(fileId,&ActiveTreasure,sizeof(struct treasure)) == -1){
-        abandonCSTM();
-    }
-
-    if (close(fileId) == -1){
-        abandonCSTM();
-    }
-
-    snprintf(temp,TEXT_BUFFER,"Added treasure with ID - %s",ActiveTreasure.treasure_id);
-    log_operation(hunt_id,"Add hunt",temp);
-    create_log_symlink(hunt_id);
-}*/
-
 void add(char *hunt_id){
     if (hunt_id[strlen(hunt_id)-1] == '/'){
         hunt_id[strlen(hunt_id)-1] = '\0';
@@ -209,6 +139,7 @@ void add(char *hunt_id){
 
     snprintf(cale, sizeof(cale), "%s/%s.dat", hunt_id, hunt_id);
 
+    //create a file if it doens't exist
     if (access(cale, F_OK) != 0 && errno == ENOENT) {
         int fileId = 0;
         if ((fileId = open(cale, O_CREAT, 00664)) == -1) {
@@ -283,13 +214,12 @@ void list(char *hunt_id){
     if ((fileId = open(temp, O_RDONLY)) == -1){
         abandonCSTM();
     }
+
     int check = 0;
     while ((check = read(fileId,&ActiveTreasure,sizeof(ActiveTreasure))) != 0){
         if (check == -1){
             abandonCSTM();
         }
-        /*sprintf(temp,"Treasure ID: %s\nUser Name: %s\nCoordinate X: %lf\nCoordinate Y: %lf\nClue: %s\nValue: %d\n\n",
-                    ActiveTreasure.treasure_id,ActiveTreasure.user_name,ActiveTreasure.coordinateX,ActiveTreasure.coordinateY,ActiveTreasure.clue,ActiveTreasure.value);*/
         snprintf(temp,TEXT_BUFFER,"ID: %s\n",ActiveTreasure.treasure_id);
         if (write(STDOUT_FILENO,temp,strlen(temp)) == -1){
             abandonCSTM();

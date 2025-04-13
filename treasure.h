@@ -1,3 +1,5 @@
+#include "customs.h"
+
 #ifndef TREASURE_H__
 #define TREASURE_H__
 

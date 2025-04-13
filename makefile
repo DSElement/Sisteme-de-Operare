@@ -5,6 +5,7 @@ OBJECTS = $(SOURCES:.c=.o)
 HEADERS = operations.h customs.h treasure.h
 TARGET = treasure_manager
 
+# In case filenames overlap with make commands
 .PHONY: all clean test build rebuild
 
 all: build

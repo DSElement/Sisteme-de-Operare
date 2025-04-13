@@ -13,6 +13,11 @@
 #include <unistd.h>
 #include <linux/limits.h>
 #include <stdbool.h>
+#include <time.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <stdbool.h>
+#include <ctype.h>
 
 #define DIRNAMESIZE 20
 #define ERROR_BUFFER_SIZE 20

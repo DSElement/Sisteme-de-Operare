@@ -1,6 +1,6 @@
 #include "treasure.h"
 #include "operations.h"
-#include <stdio.h>
+#include "customs.h"
 
 void twoArguments(char **argv){
     if (strcmp(argv[1],"--add") == 0){
@@ -32,9 +32,6 @@ void threeArguments(char **argv){
 int main(int argc, char **argv){
     switch (argc){
         case 2:{
-            /*char temp[TEXT_BUFFER];
-            strncpy(temp,argv[1],strlen(argv[1]));
-            temp[strcspn(temp,"\n")] = '\0';*/
             if (strcmp(argv[1],"--help") == 0){
                 helpUser();
             }

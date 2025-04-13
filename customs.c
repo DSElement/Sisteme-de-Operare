@@ -1,16 +1,5 @@
-#include "treasure.h"
 #include "customs.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <linux/limits.h>
-#include <stdbool.h>
+#include "treasure.h"
 
 void abandonCSTM(){
     char temp[ERROR_BUFFER_SIZE];
@@ -50,26 +39,6 @@ void createDirectoryCSTM(char *DirName){
         closeDirectoryCSTM(DirID);
     }
 }
-
-/*bool runThroughCheckDirCSTM(char *path, char *Name)
-{
-    DIR *DirID;
-    struct dirent *in;
-    char *nume;  
-    DirID = openDirectoryCSTM(path);
-    while((in = readdir(DirID))>0)
-    {
-        nume = in->d_name;
-        if(strcmp(nume, ".") == 0 || strcmp(nume, "..")==0){
-           continue;
-        }
-        if (strcmp(Name,nume) == 0){
-            return true;
-        }
-    }
-    closeDirectoryCSTM(DirID);
-    return false;
-}*/
 
 bool runThroughCheckDirCSTM(char *DirName)
 {
