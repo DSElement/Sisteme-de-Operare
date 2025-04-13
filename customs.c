@@ -89,3 +89,22 @@ bool runThroughCheckDirCSTM(char *DirName)
     }
     return false;
 }
+
+bool isTreasureAvailable(char *path, char *treasureID){
+    int fileID;
+    if ((fileID = open(path, O_RDONLY)) == -1){
+        abandonCSTM();
+    }
+
+    Treasure_t ActiveTreasure;
+    int readCheck = 0;
+    while ((readCheck = read(fileID,&ActiveTreasure,sizeof(ActiveTreasure))) != 0){
+        if (readCheck == -1){
+            abandonCSTM();
+        }
+        if (strcmp(treasureID,ActiveTreasure.treasure_id) == 0){
+            return false;
+        }
+    }
+    return true;
+}

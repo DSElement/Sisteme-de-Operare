@@ -99,6 +99,9 @@ void create_log_symlink(const char *hunt_id) {
 }
 
 void add(char *hunt_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
     if (!(runThroughCheckDirCSTM(hunt_id))){
         createDirectoryCSTM(hunt_id);
     }
@@ -108,13 +111,36 @@ void add(char *hunt_id){
     struct treasure ActiveTreasure;
     
     add_treasure(&ActiveTreasure);
+
     //strncpy(ActiveTreasure.treasure_id,hunt_id,sizeof(hunt_id));
     snprintf(cale, sizeof(cale), "%s/%s.dat",hunt_id, hunt_id);
+
+    if (access(cale,F_OK) != 0 && errno == ENOENT){
+        int fileId = 0;
+        if ((fileId = open(cale, O_CREAT, 00664)) == -1)
+        {
+            abandonCSTM();
+        }
+
+        if (close(fileId) == -1)
+        {
+            abandonCSTM();
+        }
+    }
+
+    if (!(isTreasureAvailable(cale,ActiveTreasure.treasure_id))){
+        snprintf(temp,TEXT_BUFFER,"Treasure ID already taken\n");
+        if (write(STDERR_FILENO,temp,strlen(temp)) == -1){
+            abandonCSTM();
+        }
+        return;
+    }
 
     int fileId = 0;
     if ((fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 00664)) == -1){
         abandonCSTM();
     }
+
 
     if (write(fileId,&ActiveTreasure,sizeof(struct treasure)) == -1){
         abandonCSTM();
@@ -130,6 +156,9 @@ void add(char *hunt_id){
 }
 
 void list(char *hunt_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
     char temp[LONG_TEXT];
     if (!(runThroughCheckDirCSTM(hunt_id))){
         sprintf(temp,"%s\n","No such directory");
@@ -186,6 +215,9 @@ void list(char *hunt_id){
 }
 
 void view(char *hunt_id,char *treasure_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
     char cale[PATH_MAX];
     char temp[LONG_TEXT];
     if (!(runThroughCheckDirCSTM(hunt_id))){
@@ -229,6 +261,9 @@ void view(char *hunt_id,char *treasure_id){
 }
 
 void remove_treasure(char *hunt_id, char *treasure_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
     char cale[PATH_MAX];
     char oldCale[PATH_MAX];
     char temp[TEXT_BUFFER];
@@ -298,6 +333,9 @@ void remove_treasure(char *hunt_id, char *treasure_id){
 }
 
 void remove_hunt(char *hunt_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
     char temp[TEXT_BUFFER];
     char cale[PATH_MAX];
 

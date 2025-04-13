@@ -25,8 +25,6 @@ DIR* openDirectoryCSTM(char *DirName);
 void closeDirectoryCSTM(DIR *DirID);
 void createDirectoryCSTM(char *DirName);
 bool runThroughCheckDirCSTM(char *DirName);
-
-
-
+bool isTreasureAvailable(char *path, char *treasureID);
 
 #endif
