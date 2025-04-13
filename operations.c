@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <linux/limits.h>
 #include <time.h>
+#include <sys/select.h>
+#include <sys/time.h>
 
 #define TIMESTAMP_SIZE 30
 
@@ -98,7 +100,7 @@ void create_log_symlink(const char *hunt_id) {
     }
 }
 
-void add(char *hunt_id){
+/*void add(char *hunt_id){
     if (hunt_id[strlen(hunt_id)-1] == '/'){
         hunt_id[strlen(hunt_id)-1] = '\0';
     }
@@ -152,6 +154,95 @@ void add(char *hunt_id){
 
     snprintf(temp,TEXT_BUFFER,"Added treasure with ID - %s",ActiveTreasure.treasure_id);
     log_operation(hunt_id,"Add hunt",temp);
+    create_log_symlink(hunt_id);
+}*/
+
+void add(char *hunt_id){
+    if (hunt_id[strlen(hunt_id)-1] == '/'){
+        hunt_id[strlen(hunt_id)-1] = '\0';
+    }
+    if (!(runThroughCheckDirCSTM(hunt_id))){
+        createDirectoryCSTM(hunt_id);
+    }
+
+    char cale[PATH_MAX];
+    char temp[TEXT_BUFFER];
+    char input_buffer[LONG_TEXT];
+    struct treasure ActiveTreasure;
+    
+    // Check if there's data already in stdin
+    int stdin_data = 0;
+    struct timeval tv;
+    fd_set readfds;
+    
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+    
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    
+    if (select(STDIN_FILENO + 1, &readfds, NULL, NULL, &tv) > 0) {
+        // Read the entire input at once
+        ssize_t bytes_read = 0;
+        ssize_t total_read = 0;
+        
+        while ((bytes_read = read(STDIN_FILENO, input_buffer + total_read, 
+                                 LONG_TEXT - total_read - 1)) > 0) {
+            total_read += bytes_read;
+            if (total_read >= LONG_TEXT - 1)
+                break;
+        }
+        
+        if (total_read > 0) {
+            input_buffer[total_read] = '\0';
+            stdin_data = 1;
+        }
+    }
+    
+    if (stdin_data) {
+        // If we have data from stdin, use the parser
+        parse_and_add_treasure(&ActiveTreasure, input_buffer);
+    } else {
+        // Otherwise, go with the interactive approach
+        add_treasure(&ActiveTreasure);
+    }
+
+    snprintf(cale, sizeof(cale), "%s/%s.dat", hunt_id, hunt_id);
+
+    if (access(cale, F_OK) != 0 && errno == ENOENT) {
+        int fileId = 0;
+        if ((fileId = open(cale, O_CREAT, 00664)) == -1) {
+            abandonCSTM();
+        }
+
+        if (close(fileId) == -1) {
+            abandonCSTM();
+        }
+    }
+
+    if (!(isTreasureAvailable(cale, ActiveTreasure.treasure_id))) {
+        snprintf(temp, TEXT_BUFFER, "Treasure ID already taken\n");
+        if (write(STDERR_FILENO, temp, strlen(temp)) == -1) {
+            abandonCSTM();
+        }
+        return;
+    }
+
+    int fileId = 0;
+    if ((fileId = open(cale, O_CREAT | O_WRONLY | O_APPEND, 00664)) == -1) {
+        abandonCSTM();
+    }
+
+    if (write(fileId, &ActiveTreasure, sizeof(struct treasure)) == -1) {
+        abandonCSTM();
+    }
+
+    if (close(fileId) == -1) {
+        abandonCSTM();
+    }
+
+    snprintf(temp, TEXT_BUFFER, "Added treasure with ID - %s", ActiveTreasure.treasure_id);
+    log_operation(hunt_id, "Add hunt", temp);
     create_log_symlink(hunt_id);
 }
 

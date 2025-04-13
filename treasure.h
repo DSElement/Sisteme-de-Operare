@@ -11,6 +11,7 @@ typedef struct treasure{
 }Treasure_t;
 
 void add_treasure(Treasure_t* buff_struct);
+void parse_and_add_treasure(Treasure_t* buff_struct, const char* input_string);
 
 
 #endif
