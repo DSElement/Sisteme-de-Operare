@@ -16,8 +16,10 @@
 #include <time.h>
 #include <sys/select.h>
 #include <sys/time.h>
-#include <stdbool.h>
 #include <ctype.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 #define DIRNAMESIZE 20
 #define ERROR_BUFFER_SIZE 20
@@ -31,5 +33,6 @@ void closeDirectoryCSTM(DIR *DirID);
 void createDirectoryCSTM(char *DirName);
 bool runThroughCheckDirCSTM(char *DirName);
 bool isTreasureAvailable(char *path, char *treasureID);
+void trim_string(char *str);
 
 #endif

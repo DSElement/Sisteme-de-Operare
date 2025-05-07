@@ -1,7 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g
-SOURCES = operations.c customs.c treasure_manager.c treasure.c
-OBJECTS = $(SOURCES:.c=.o)
+SOURCES = operations.c customs.c treasure_manager.c treasure.c treasure_hub.c monitor.c monitor_state.c
 HEADERS = operations.h customs.h treasure.h
 TARGET = treasure_manager
 
@@ -22,6 +21,7 @@ clean:
 	$(RM) $(TARGET) $(OBJECTS)
 	$(RM) -r test_hunt*
 	$(RM) logged_hunt--*
+	$(RM) .monitor_cmd
 
 rebuild: clean build
 

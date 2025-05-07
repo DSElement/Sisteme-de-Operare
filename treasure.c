@@ -40,35 +40,6 @@ int is_valid_integer(const char *str) {
     return 1;
 }
 
-// Trim whitespace from a string
-void trim_string(char *str) {
-    if (str == NULL)
-        return;
-        
-    char *start = str;
-    
-    while (isspace(*start)) start++;
-    
-    if (*start == 0) {
-        *str = 0;
-        return;
-    }
-    
-    char *end = start + strlen(start) - 1;
-    while (end > start && isspace(*end)) end--;
-    
-    *(end + 1) = 0;
-    
-    if (start != str) {
-        while (*start) {
-            *str = *start;
-            str++;
-            start++;
-        }
-        *str = 0;
-    }
-}
-
 void add_treasure(Treasure_t* buff_struct) {
     if (buff_struct == NULL || sizeof(*(buff_struct)) != sizeof(Treasure_t)) {
         abandonCSTM();
