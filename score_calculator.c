@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
         }
 
         int found = 0;
-        for (int i = 0; i < count; ++i) {
+        for (int i = 0; i < count; i++) {
             if (strcmp(scores[i].user, t.user_name) == 0) {
                 scores[i].score += t.value;
                 found = 1;
@@ -74,10 +74,10 @@ int main(int argc, char **argv) {
     close(fd);
 
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "Hunt: %s\n", argv[1]);
+    snprintf(buffer, sizeof(buffer), "\nHunt: %s\n", argv[1]);
     write_line(buffer);
 
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < count; i++) {
         snprintf(buffer, sizeof(buffer), "%s: %d\n", scores[i].user, scores[i].score);
         write_line(buffer);
     }

@@ -296,7 +296,8 @@ int main(){
         bool command_found = false;
         
         while (cmd->name != NULL) {
-            if (strncmp(command, cmd->name, strlen(cmd->name)) == 0) {
+            //if (strncmp(command, cmd->name, strlen(cmd->name)) == 0) {
+            if (strcmp(command, cmd->name) == 0) {
                 command_found = true;
 
                 if (cmd->requires_monitor && monitor_ex->state == OFFLINE) {
