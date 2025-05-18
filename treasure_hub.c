@@ -53,6 +53,8 @@ void *monitor_output_reader(void *arg) {
         safe_print(buffer); 
     }
 
+    print_prompt();
+
     return NULL;
 }
 
@@ -254,6 +256,7 @@ int main(){
 
     char input[256];
     while (1) {
+        fflush(stdout);  // ensure anything pending is flushed
         print_prompt();
         ssize_t bytes_read = read(STDIN_FILENO, input, sizeof(input) - 1);
         if (bytes_read == -1){
