@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 
 #include "customs.h"
 #include "monitor_state.h"
@@ -6,8 +7,23 @@
 
 #define CMD_FILE ".monitor_cmd"
 
+#define PIPE_CHUNK 10
+
+
 int pipefd[2]; // pipefd[0] = read end, pipefd[1] = write end
 pthread_t monitor_reader_thread;
+
+typedef struct {
+    char hunt_id[DIRNAMESIZE];
+    int read_fd;
+    pid_t child_pid;
+} ScorePipe;
+
+typedef struct {
+    const char *name;
+    void (*handler)(const char *cmd);
+    bool requires_monitor;
+} command_t;
 
 void print_prompt() {
     const char *prompt = "> ";
@@ -40,13 +56,6 @@ void *monitor_output_reader(void *arg) {
     return NULL;
 }
 
-
-typedef struct {
-    const char *name;
-    void (*handler)(const char *cmd);
-    bool requires_monitor;
-} command_t;
-
 void handle_help(const char *cmd){
     const char *help_message = 
         "Available commands:\n"
@@ -54,6 +63,7 @@ void handle_help(const char *cmd){
         "  list_hunts: List all hunts and their treasures\n"
         "  list_treasures <hunt_id>: List all treasures in a specific hunt\n"
         "  view_treasure <hunt_id> <treasure_id>: View details of a specific treasure\n"
+        "  calculate_score: Calculate scores for all hunts\n"
         "  stop_monitor: Stop the monitor process\n"
         "  exit: Exit the program\n";
     safe_print(help_message);
@@ -116,6 +126,89 @@ void handle_stop_monitor(const char *cmd){
     pthread_detach(monitor_reader_thread);
 }
 
+void handle_calculate_score(const char *cmd) {
+    DIR *d = opendir(".");
+    if (!d) {
+        safe_print("Failed to open current directory.\n");
+        return;
+    }
+
+    struct dirent *entry;
+    ScorePipe *pipes = NULL;
+    int count = 0;
+    int capacity = 0;
+
+    while ((entry = readdir(d)) != NULL) {
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, ".git") == 0) continue;
+
+        // Check if the .dat file exists
+        char dat_path[PATH_MAX];
+        snprintf(dat_path, sizeof(dat_path), "%s/%s.dat", entry->d_name, entry->d_name);
+        if (access(dat_path, F_OK) != 0) continue;
+
+        // Grow array if needed
+        if (count == capacity) {
+            capacity += PIPE_CHUNK;
+            pipes = realloc(pipes, capacity * sizeof(ScorePipe));
+            if (!pipes) {
+                safe_print("Memory allocation failed.\n");
+                closedir(d);
+                return;
+            }
+        }
+
+        int pipefd[2];
+        if (pipe(pipefd) == -1) {
+            safe_print("Failed to create pipe.\n");
+            continue;
+        }
+
+        pid_t pid = fork();
+        if (pid < 0) {
+            safe_print("Fork failed.\n");
+            close(pipefd[0]);
+            close(pipefd[1]);
+            continue;
+        } else if (pid == 0) {
+            // Child
+            close(pipefd[0]); // close read end
+            dup2(pipefd[1], STDOUT_FILENO); // redirect stdout to pipe
+            close(pipefd[1]);
+
+            execlp("./score_calculator", "score_calculator", entry->d_name, NULL);
+            // If exec fails
+            abandonCSTM();
+        } else {
+            // Parent
+            close(pipefd[1]); // close write end
+
+            strncpy(pipes[count].hunt_id, entry->d_name, DIRNAMESIZE - 1);
+            pipes[count].hunt_id[DIRNAMESIZE - 1] = '\0';
+            pipes[count].read_fd = pipefd[0];
+            pipes[count].child_pid = pid;
+            count++;
+        }
+    }
+
+    closedir(d);
+
+    // Read and print output from each in order
+    for (int i = 0; i < count; ++i) {
+        waitpid(pipes[i].child_pid, NULL, 0);
+
+        char buffer[1024];
+        ssize_t n;
+        while ((n = read(pipes[i].read_fd, buffer, sizeof(buffer))) > 0) {
+            write(STDOUT_FILENO, buffer, n);
+        }
+
+        close(pipes[i].read_fd);
+    }
+
+    free(pipes);
+}
+
 void handle_exit(const char *cmd){
     exit(EXIT_SUCCESS);
 }
@@ -124,9 +217,9 @@ void handle_sigchld(int sig){
     int status;
     pid_t pid = wait(&status);
     if (pid == -1){
-        safe_print("Error waiting for child process.\n");
+        ; //ignoring cause there's lots of children
     }
-    else {
+    else if (pid == monitor_ex->pid){
         safe_print("Monitor process has exited.\n");
         monitor_ex->state = OFFLINE;
         monitor_ex->pid = 0;
@@ -139,6 +232,7 @@ command_t commands[] = {
     {"list_hunts", handle_monitor_command, true},
     {"list_treasures", handle_monitor_command, true},
     {"view_treasure", handle_monitor_command, true},
+    {"calculate_score", handle_calculate_score, false},
     {"stop_monitor", handle_stop_monitor, true},
     {"exit", handle_exit, false},
     {NULL, NULL, false} // Sentinel to mark end of array
