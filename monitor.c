@@ -27,7 +27,6 @@ void list_hunts() {
         // Construct path to the .dat file
         char data_file[BUFFER_SIZE];
         snprintf(data_file, sizeof(data_file), "%s/%s.dat", entry->d_name, entry->d_name);
-        printf("%s\n", data_file);
 
         int fd = open(data_file, O_RDONLY);
         if (fd == -1) {
@@ -64,7 +63,7 @@ void list_treasures(const char *hunt_id) {
         return;
     }
 
-    struct treasure t;
+    /*struct treasure t;
     ssize_t n;
     while ((n = read(fd, &t, sizeof(t))) > 0) {
         if (n != sizeof(t)) break;
@@ -81,11 +80,26 @@ void list_treasures(const char *hunt_id) {
             execlp("./treasure_manager", "treasure_manager", "--view", hunt_id, t.treasure_id, NULL);
             // If execlp fails
             abandonCSTM();
-        } else {
+        }
+        else {
             // In parent process: wait for child to finish
             int status;
             waitpid(pid, &status, 0);
         }
+    }*/
+
+    pid_t pid = fork();
+    if (pid < 0){
+        safe_print("Fork failed\n");
+        close(fd);
+        return;
+    } else if (pid == 0) {
+        execlp("./treasure_manager", "treasure_manager", "--list", hunt_id, NULL);
+
+        abandonCSTM();
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
     }
 
     close(fd);

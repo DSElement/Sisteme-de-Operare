@@ -34,5 +34,6 @@ void createDirectoryCSTM(char *DirName);
 bool runThroughCheckDirCSTM(char *DirName);
 bool isTreasureAvailable(char *path, char *treasureID);
 void trim_string(char *str);
+void safe_print(const char *msg);
 
 #endif

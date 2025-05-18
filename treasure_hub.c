@@ -2,8 +2,12 @@
 
 #include "customs.h"
 #include "monitor_state.h"
+#include <pthread.h>
 
 #define CMD_FILE ".monitor_cmd"
+
+int pipefd[2]; // pipefd[0] = read end, pipefd[1] = write end
+pthread_t monitor_reader_thread;
 
 void print_prompt() {
     const char *prompt = "> ";
@@ -23,6 +27,19 @@ void write_command(const char *cmd) {
         safe_print("Failed to close command file.\n");
     }
 }
+
+void *monitor_output_reader(void *arg) {
+    char buffer[1024];
+    ssize_t n;
+
+    while ((n = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[n] = '\0';
+        safe_print(buffer); 
+    }
+
+    return NULL;
+}
+
 
 typedef struct {
     const char *name;
@@ -48,17 +65,32 @@ void handle_start_monitor(const char *cmd){
         return;
     }
 
+    if (pipe(pipefd) == -1){
+        abandonCSTM();
+    }
+
     monitor_ex->pid = fork();
     if (monitor_ex->pid == -1){
         abandonCSTM();
     }
     else if (monitor_ex->pid == 0){
+        // In child (monitor)
+        close(pipefd[0]); // Close unused read end
+        dup2(pipefd[1], STDOUT_FILENO); // Redirect stdout to pipe
+        dup2(pipefd[1], STDERR_FILENO); // Optional: redirect stderr too
+        close(pipefd[1]); // Done with original fd
+
         char *args[] = {"./monitor", NULL};
         execv("./monitor", args);
         //if we got here, execv failed
         abandonCSTM(); 
     }
     else {
+        // In parent (hub)
+        close(pipefd[1]); // Close write end (only monitor uses it)
+
+        pthread_create(&monitor_reader_thread, NULL, monitor_output_reader, NULL);
+
         monitor_ex->state = RUNNING;
         safe_print("Monitor started successfully.\n");
     }
@@ -79,6 +111,9 @@ void handle_stop_monitor(const char *cmd){
             abandonCSTM();
         }
     }
+    close(pipefd[0]); // Triggers EOF in the reader thread
+    // Wait for pipe to close and reader to exit
+    pthread_detach(monitor_reader_thread);
 }
 
 void handle_exit(const char *cmd){
@@ -137,6 +172,11 @@ int main(){
         }
         if (bytes_read == 0) break;
 
+        if (monitor_ex->state == SHUTTING_DOWN) {
+            safe_print("Monitor is shutting down. Please wait...\n");
+            continue;
+        }
+
         input[bytes_read] = '\0';
         input[strcspn(input, "\n")] = 0;
         trim_string(input);
@@ -149,11 +189,6 @@ int main(){
             iterator++;
         }
         *iterator = '\0'; // Null-terminate the command string
-
-        if (monitor_ex->state == SHUTTING_DOWN){
-            safe_print("Cannot process commands while shutting down.\n");
-            continue;
-        }
 
         if (strcmp(input,"help") == 0){
             handle_help(input);

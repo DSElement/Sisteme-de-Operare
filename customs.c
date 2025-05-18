@@ -78,6 +78,11 @@ bool isTreasureAvailable(char *path, char *treasureID){
             return false;
         }
     }
+    if (close(fileID) == -1){
+        if (write(STDERR_FILENO, strerror(errno), sizeof(strerror(errno))) == -1){
+            ;
+        }
+    }
     return true;
 }
 

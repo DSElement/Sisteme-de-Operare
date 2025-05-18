@@ -8,7 +8,7 @@ typedef struct treasure{
     char user_name[20];
     double coordinateX;
     double coordinateY;
-    char clue[200];
+    char clue[128];
     int value;
 }Treasure_t;
 
